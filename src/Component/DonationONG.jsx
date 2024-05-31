@@ -25,22 +25,13 @@ const DonationONG = () => {
     setSuccess("");
 
     try {
-      const response = await axios.post(
-        "https://zm.instantbillspay.com/instantpay/payload/bill/makepayment",
-        {
-          email: formData.email,
-          firstname: formData.firstname,
-          lastname: formData.lastname,
-          phone: formData.phone,
-          amount: formData.amount,
-          merchantID: "NG0700144", // Ajoutez votre ID de marchand ici
-          uniqueID: Date.now().toString(), // Générez un identifiant unique pour la transaction
-          description: "Test description",
-          successReturnUrl: "https://xyz.com/success-page",
-          cancelReturnUrl: " https://xyz.com/cancel-page ",
-          failureReturnUrl: " https://xyz.com/failure-page ",
-        }
-      );
+      const response = await axios.post("/api/make-payment", {
+        email: formData.email,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        phone: formData.phone,
+        amount: formData.amount,
+      });
 
       if (response.data.status === 200) {
         setSuccess("Transaction initiated successfully.");

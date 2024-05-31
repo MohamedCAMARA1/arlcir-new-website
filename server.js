@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "build")));
 
 // Route POST pour initier un paiement
-app.post("/make-payment", async (req, res) => {
+app.post("/api/make-payment", async (req, res) => {
   const paymentDetails = {
     ...req.body,
     uniqueID: uuidv4(),
