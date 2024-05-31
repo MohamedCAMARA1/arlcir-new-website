@@ -24,31 +24,32 @@ const DonationONG = () => {
     setError("");
     setSuccess("");
 
-    const { email, firstname, lastname, phone, amount } = formData;
-
     try {
       const response = await axios.post(
-        "/api/donate", // URL du backend
+        "https://zm.instantbillspay.com/instantpay/payload/bill/makepayment",
         {
-          email,
-          firstname,
-          lastname,
-          phone,
-          amount,
+          email: formData.email,
+          firstname: formData.firstname,
+          lastname: formData.lastname,
+          phone: formData.phone,
+          amount: formData.amount,
+          merchantID: "NG0700144", // Ajoutez votre ID de marchand ici
+          uniqueID: Date.now().toString(), // Générez un identifiant unique pour la transaction
+          description: "Test description",
+          successReturnUrl: "https://xyz.com/success-page",
+          cancelReturnUrl: " https://xyz.com/cancel-page ",
+          failureReturnUrl: " https://xyz.com/failure-page ",
         }
       );
-      if (response.data.success) {
-        setSuccess(
-          "Transaction initiated successfully. Redirecting to payment page..."
-        );
-        window.location.href = response.data.paymentUrl; // Redirection vers l'URL de paiement
+
+      if (response.data.status === 200) {
+        setSuccess("Transaction initiated successfully.");
+        window.location.href = response.data.gateway_url; // Redirection vers l'URL de paiement
       } else {
         setError("Failed to initiate transaction. Please try again.");
       }
     } catch (error) {
-      setError(
-        "There was an error processing your donation. Please try again."
-      );
+      setError("There was an error processing your request. Please try again.");
       console.error("Error:", error);
     } finally {
       setLoading(false);
@@ -57,7 +58,7 @@ const DonationONG = () => {
 
   return (
     <div>
-      <h1>Don pour l'ONG ARLCIR</h1>
+      <h2>Instant Bills Pay</h2>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Email:</label>
@@ -110,7 +111,7 @@ const DonationONG = () => {
           />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? "Processing..." : "Donate"}
+          {loading ? "Processing..." : "Make Payment"}
         </button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}

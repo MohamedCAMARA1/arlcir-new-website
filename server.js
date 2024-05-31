@@ -1,38 +1,24 @@
-require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const bodyParser = require("body-parser");
-const cors = require("cors");
-const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors());
 app.use(bodyParser.json());
-
-// Servir les fichiers statiques de l'application React
-app.use(express.static(path.join(__dirname, "build")));
 
 const secretKey = process.env.SECRET_KEY;
 const merchantID = process.env.MERCHANT_ID;
 const baseURL =
   "https://zm.instantbillspay.com/instantpay/payload/bill/makepayment";
 
-// Vérification des variables d'environnement
-const requiredEnvVars = ["SECRET_KEY", "MERCHANT_ID"];
-requiredEnvVars.forEach((key) => {
-  if (!process.env[key]) {
-    console.error(`Environment variable ${key} is missing!`);
-    process.exit(1);
-  }
-});
-
 // Route pour initier une transaction de paiement
 app.post("/api/donate", async (req, res) => {
   const { email, firstname, lastname, phone, amount } = req.body;
   const uniqueID = Date.now().toString(); // Générer un identifiant unique pour la transaction
 
+  // Créer le payload avec les détails de la transaction
   const payload = {
     email,
     firstname,
@@ -48,10 +34,11 @@ app.post("/api/donate", async (req, res) => {
   };
 
   try {
+    // Envoyer la demande à l'API
     const response = await axios.post(baseURL, payload, {
       headers: {
         "Content-Type": "application/json",
-        "Secret-Key": secretKey,
+        "Secret-Key": secretKey, // Utilisation de la clé secrète dans l'en-tête
       },
     });
 
@@ -77,12 +64,6 @@ app.post("/api/donate", async (req, res) => {
   }
 });
 
-// Route pour servir l'application React
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
-});
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`var env  ${secretKey} et l'autre ${merchantID}`);
 });
