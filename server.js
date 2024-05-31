@@ -68,6 +68,7 @@ app.post("/api/donate", async (req, res) => {
       });
     }
   } catch (error) {
+    console.error("Error processing donation:", error);
     res.status(500).json({
       success: false,
       message: "Error processing donation",

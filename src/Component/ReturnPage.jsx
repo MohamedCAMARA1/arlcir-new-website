@@ -10,7 +10,7 @@ const ReturnPage = () => {
   useEffect(() => {
     const fetchTransactionStatus = async () => {
       try {
-        const response = await axios.get(`/return?ref=${ref}`); // URL du backend pour vérifier le statut de la transaction
+        const response = await axios.get(`/return?ref=${ref}`);
         setTransactionStatus(response.data);
       } catch (error) {
         console.error("Error fetching transaction status:", error);
