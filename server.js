@@ -5,16 +5,29 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Proxy middleware
+app.use(
+  "/api",
+  createProxyMiddleware({
+    target: "https://zm.instantbillspay.com",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/api": "", // Enlever '/api' du chemin de la requête
+    },
+  })
+);
+
 // Servir les fichiers statiques de l'application React
 app.use(express.static(path.join(__dirname, "build")));
 
 // Route POST pour initier un paiement
-app.post("/api/make-payment", async (req, res) => {
+app.post("/make-payment", async (req, res) => {
   const paymentDetails = {
     ...req.body,
     uniqueID: uuidv4(),
