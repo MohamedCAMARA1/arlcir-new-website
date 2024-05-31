@@ -38,9 +38,13 @@ const DonationONG = () => {
         }
       );
       setSuccess(
-        "Transaction initiated successfully. Please check your email for further instructions."
+        "Transaction initiated successfully. Redirecting to payment page..."
       );
       console.log("Response:", response.data);
+
+      if (response.data.paymentUrl) {
+        window.location.href = response.data.paymentUrl; // Rediriger vers l'URL de paiement
+      }
     } catch (error) {
       setError(
         "There was an error processing your donation. Please try again."

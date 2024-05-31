@@ -20,6 +20,15 @@ const merchantID = process.env.MERCHANT_ID;
 const baseURL =
   "https://gn.instantbillspay.com/instantpay/payload/bill/payment";
 
+// Vérification des variables d'environnement
+const requiredEnvVars = ["SECRET_KEY", "MERCHANT_ID"];
+requiredEnvVars.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`Environment variable ${key} is missing!`);
+    process.exit(1);
+  }
+});
+
 // Fonction de vérification du statut de la transaction (simulation)
 const checkTransactionStatus = (ref) => {
   const isSuccessful = parseInt(ref) % 2 === 0;
@@ -62,7 +71,7 @@ app.post("/api/donate", async (req, res) => {
     res.json({
       success: true,
       message: "Transaction initiated successfully",
-      reference: response.data.reference, // Envoyer la référence de transaction
+      paymentUrl: response.data.paymentUrl, // Envoyer l'URL de paiement
     });
   } catch (error) {
     res.status(500).json({
