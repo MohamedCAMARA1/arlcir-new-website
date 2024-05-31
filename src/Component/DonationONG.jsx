@@ -53,7 +53,7 @@ const DonationONG = () => {
 
   return (
     <div>
-      <h1>Donation to ONG</h1>
+      <h1>Don pour l'ONG ARLCIR</h1>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Email:</label>
