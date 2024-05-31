@@ -1,69 +1,64 @@
+require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const bodyParser = require("body-parser");
-const crypto = require("crypto");
+const cors = require("cors");
+const { v4: uuidv4 } = require("uuid");
+const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 5001;
-
+app.use(cors());
 app.use(bodyParser.json());
 
-const secretKey = process.env.SECRET_KEY;
-const merchantID = process.env.MERCHANT_ID;
-const baseURL =
-  "https://zm.instantbillspay.com/instantpay/payload/bill/makepayment";
+// Servir les fichiers statiques de l'application React
+app.use(express.static(path.join(__dirname, "build")));
 
-// Route pour initier une transaction de paiement
-app.post("/api/donate", async (req, res) => {
-  const { email, firstname, lastname, phone, amount } = req.body;
-  const uniqueID = Date.now().toString(); // Générer un identifiant unique pour la transaction
-
-  // Créer le payload avec les détails de la transaction
-  const payload = {
-    email,
-    firstname,
-    lastname,
-    phone,
-    merchantID,
-    uniqueID,
-    description: "Don Pour l'ONG ARLCIR",
-    amount,
-    successReturnUrl: `https://${req.get("host")}/success`,
-    cancelReturnUrl: `https://${req.get("host")}/cancel`,
-    failureReturnUrl: `https://${req.get("host")}/failure`,
+// Route POST pour initier un paiement
+app.post("/make-payment", async (req, res) => {
+  const paymentDetails = {
+    ...req.body,
+    uniqueID: uuidv4(),
+    description: "Test Payment",
+    returnUrl: "https://arlcir.com/success-page",
+    failUrl: "https://arlcir.com/failure-page",
+    cancelUrl: "https://arlcir.com/cancel-page",
   };
 
   try {
-    // Envoyer la demande à l'API
-    const response = await axios.post(baseURL, payload, {
-      headers: {
-        "Content-Type": "application/json",
-        "Secret-Key": secretKey, // Utilisation de la clé secrète dans l'en-tête
-      },
-    });
+    const response = await axios.post(
+      process.env.API_TEST_URL,
+      paymentDetails,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Secret-Key": process.env.API_SECRET_KEY,
+        },
+      }
+    );
 
-    if (response.data.status === 200) {
-      res.json({
-        success: true,
-        message: "Transaction initiated successfully",
-        paymentUrl: response.data.gateway_url, // Envoyer l'URL de paiement
-      });
+    if (response.status === 200) {
+      res.json({ status: 200, gateway_url: response.data.gateway_url });
     } else {
-      res.status(500).json({
-        success: false,
-        message: "Failed to initiate transaction",
+      res.status(response.status).json({
+        message: "Failed to initiate payment",
+        details: response.data,
       });
     }
   } catch (error) {
-    console.error("Error processing donation:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing donation",
-      error: error.message,
-    });
+    console.error("Error processing payment:", error);
+    if (error.response) {
+      return res
+        .status(error.response.status)
+        .json({ message: error.response.data.message });
+    }
+    res.status(500).json({ message: "Server error processing payment" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Pour toutes les autres requêtes, retourner l'application React
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
+
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
