@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
-const crypto = require("crypto");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
@@ -18,7 +17,7 @@ app.use(express.static(path.join(__dirname, "build")));
 const secretKey = process.env.SECRET_KEY;
 const merchantID = process.env.MERCHANT_ID;
 const baseURL =
-  "https://gn.instantbillspay.com/instantpay/payload/bill/payment";
+  "https://zm.instantbillspay.com/instantpay/payload/bill/makepayment";
 
 // Vérification des variables d'environnement
 const requiredEnvVars = ["SECRET_KEY", "MERCHANT_ID"];
@@ -29,25 +28,10 @@ requiredEnvVars.forEach((key) => {
   }
 });
 
-// Fonction de vérification du statut de la transaction (simulation)
-const checkTransactionStatus = (ref) => {
-  const isSuccessful = parseInt(ref) % 2 === 0;
-  return {
-    status: isSuccessful ? "SUCCESSFUL" : "FAILED",
-    info: isSuccessful ? "Payment Successful" : "Payment Failed",
-  };
-};
-
 // Route pour initier une transaction de paiement
 app.post("/api/donate", async (req, res) => {
   const { email, firstname, lastname, phone, amount } = req.body;
   const uniqueID = Date.now().toString(); // Générer un identifiant unique pour la transaction
-
-  const stringToHash = `${email}${firstname}${lastname}${merchantID}${uniqueID}${amount}`;
-  const hash = crypto
-    .createHmac("sha512", secretKey)
-    .update(stringToHash)
-    .digest("hex");
 
   const payload = {
     email,
@@ -58,21 +42,31 @@ app.post("/api/donate", async (req, res) => {
     uniqueID,
     description: "Don Pour l'ONG ARLCIR",
     amount,
-    returnUrl: `https://${req.get("host")}/return`, // Utiliser l'URL de la route de retour
-    hash,
+    successReturnUrl: `https://${req.get("host")}/success`,
+    cancelReturnUrl: `https://${req.get("host")}/cancel`,
+    failureReturnUrl: `https://${req.get("host")}/failure`,
   };
 
   try {
     const response = await axios.post(baseURL, payload, {
       headers: {
         "Content-Type": "application/json",
+        "Secret-Key": secretKey,
       },
     });
-    res.json({
-      success: true,
-      message: "Transaction initiated successfully",
-      paymentUrl: response.data.paymentUrl, // Envoyer l'URL de paiement
-    });
+
+    if (response.data.status === 200) {
+      res.json({
+        success: true,
+        message: "Transaction initiated successfully",
+        paymentUrl: response.data.gateway_url, // Envoyer l'URL de paiement
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to initiate transaction",
+      });
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -80,13 +74,6 @@ app.post("/api/donate", async (req, res) => {
       error: error.message,
     });
   }
-});
-
-// Route pour gérer les retours de paiement
-app.get("/return", (req, res) => {
-  const { ref } = req.query;
-  const transactionStatus = checkTransactionStatus(ref);
-  res.json(transactionStatus);
 });
 
 // Route pour servir l'application React

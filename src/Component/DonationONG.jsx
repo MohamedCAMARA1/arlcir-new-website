@@ -37,13 +37,13 @@ const DonationONG = () => {
           amount,
         }
       );
-      setSuccess(
-        "Transaction initiated successfully. Redirecting to payment page..."
-      );
-      console.log("Response:", response.data);
-
-      if (response.data.paymentUrl) {
-        window.location.href = response.data.paymentUrl; // Rediriger vers l'URL de paiement
+      if (response.data.success) {
+        setSuccess(
+          "Transaction initiated successfully. Redirecting to payment page..."
+        );
+        window.location.href = response.data.paymentUrl; // Redirection vers l'URL de paiement
+      } else {
+        setError("Failed to initiate transaction. Please try again.");
       }
     } catch (error) {
       setError(
