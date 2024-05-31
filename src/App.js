@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import DonationONG from "./components/DonationONG";
-import ReturnPage from "./components/ReturnPage";
+import DonationONG from "./Component/DonationONG";
+import ReturnPage from "./Component/ReturnPage";
 
 const App = () => {
   return (
